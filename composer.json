@@ -1,0 +1,36 @@
+{
+	"name"        : "nazar-pc/btrfs-sync-subvolumes",
+	"description" : "This is a pretty naive implementation of replication exact set of subvolumes from one location to another, plays nicely with Just backup btrfs.",
+	"keywords"    : [
+		"btrfs",
+		"cli",
+		"backup",
+		"snapshot",
+		"subvolume",
+		"copy",
+		"sync",
+		"synchronization",
+		"filesystem"
+	],
+	"homepage"    : "https://github.com/nazar-pc/btrfs-sync-subvolumes",
+	"license"     : "MIT",
+	"require"     : {
+		"php" : ">=5.6"
+	},
+	"authors"     : [
+		{
+			"name"     : "Nazar Mokrynskyi",
+			"email"    : "nazar@mokrynskyi.com",
+			"homepage" : "https://cleverstyle.org/",
+			"role"     : "Developer"
+		}
+	],
+	"bin"         : [
+		"btrfs-sync-subvolumes"
+	],
+	"extra"       : {
+		"branch-alias" : {
+			"dev-master" : "1.0-dev"
+		}
+	}
+}

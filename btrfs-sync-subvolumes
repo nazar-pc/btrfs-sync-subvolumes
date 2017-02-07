@@ -1,0 +1,83 @@
+#!/usr/bin/php
+<?php
+/**
+ * @package   Btrfs sync subvolumes
+ * @author    Nazar Mokrynskyi <nazar@mokrynskyi.com>
+ * @copyright Copyright (c) 2017, Nazar Mokrynskyi
+ * @license   http://opensource.org/licenses/MIT
+ * @version   0.1
+ */
+if (!isset($argv[2])) {
+	echo <<<HELP
+Usage:
+  php btrfs-sync-subvolumes /source/directory /target/directory
+
+It will scan /source/directory for directories and will copy each subvolume to /target/directory.
+So, /source/directory/sub1 will be copied as /target/directory/sub1 and so on for each subvolume (binary diffs are used if possible in order to optimize transfer).
+As the result it will replicate all subvolumes from /source/directory in /target/directory so that both directories will have the same list of identical subvolumes.
+Subvolumes from /target/directory that do not exist in /source/directory will be removed.
+
+NOTE: Important assumptions:
+  - all directories found in /source/directory are subvolumes (no real check exists)
+  - each next subvolume (as listed by filesystem) is based on previous, otherwise instead of binary diff the whole subvolume will be copied
+
+HELP;
+	return;
+}
+$source = $argv[1];
+$target = $argv[2];
+$binary = file_exists('/usr/sbin/btrfs') ? '/usr/sbin/btrfs' : '/bin/btrfs';
+
+function try_exec (...$commands) {
+	foreach ($commands as $command) {
+		echo "CMD: $command\n";
+		passthru($command, $status);
+		if ($status != 0) {
+			echo "Failed\n";
+		} else {
+			echo "Succeed\n";
+			return true;
+		}
+	}
+	return false;
+}
+
+$subvolumes = glob("$source/*", GLOB_ONLYDIR);
+if (!$subvolumes) {
+	echo "No subvolumes found, exiting\n";
+	exit;
+}
+foreach ($subvolumes as $i => $subvolume) {
+	$full_copy_cmd = "$binary send  \"$subvolume\" | $binary receive \"$target\"";
+	$basename = basename($subvolume);
+	if (is_dir("$target/$basename")) {
+		echo "$target/$basename already present, skipping it\n";
+		continue;
+	} elseif (isset($subvolumes[$i - 1])) {
+		$previous = $subvolumes[$i - 1];
+		$result   = try_exec("$binary send -p \"$previous\" \"$subvolume\" | $binary receive \"$target\"");
+		if (!$result) {
+			echo "Diff failed, fallback to full copy\n";
+			echo "Deleting failed copy of subvolume first\n";
+			try_exec("$binary subvolume delete \"$target/$basename\"");
+			echo "Now doing full copy\n";
+			$result = try_exec($full_copy_cmd);
+		}
+	} else {
+		$result = try_exec($full_copy_cmd);
+	}
+	if (!$result) {
+		echo "Last subvolume was not copied, synchronization stopped\n";
+		exit;
+	}
+}
+
+$subvolumes = glob("$target/*", GLOB_ONLYDIR);
+foreach ($subvolumes as $subvolume) {
+	$basename = basename($subvolume);
+	if (!is_dir("$source/$basename")) {
+		try_exec("$binary subvolume delete \"$subvolume\"");
+	}
+}
+
+echo "Done!\n";
