@@ -2,7 +2,7 @@
 This is a pretty naive implementation of replication exact set of subvolumes from one location to another, plays nicely with Just backup btrfs.
 
 ### Why?
-My primary use case is that I'm doing regular snapshots on SSD for my system drive (root, home, etc.) as wel as copying them to external HDD, all done by [Just backup btrfs](https://github.com/nazar-pc/just-backup-btrfs) natively.
+My primary use case is that I'm doing regular snapshots on SSD for my system drive (root, home, etc.) as well as copying them to external HDD, all done by [Just backup btrfs](https://github.com/nazar-pc/just-backup-btrfs) natively.
 
 However, I also wanted to make offline backup from time to time and this project does just that, copying all snapshots from online HDD to offline HDD that I'm connecting from time to time.
 
