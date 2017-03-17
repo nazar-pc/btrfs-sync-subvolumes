@@ -26,7 +26,15 @@ HELP;
 }
 $source = $argv[1];
 $target = $argv[2];
-$binary = file_exists('/usr/sbin/btrfs') ? '/usr/sbin/btrfs' : '/bin/btrfs';
+if (file_exists('/usr/sbin/btrfs')) {
+	$binary = '/usr/sbin/btrfs';
+} elseif (file_exists('/sbin/btrfs')) {
+	$binary = '/sbin/btrfs';
+} elseif (file_exists('/bin/btrfs')) {
+	$binary = '/bin/btrfs';
+} else {
+	throw new RuntimeException("Can't find btrfs binary");
+}
 
 function try_exec (...$commands) {
 	foreach ($commands as $command) {
@@ -49,7 +57,7 @@ if (!$subvolumes) {
 }
 foreach ($subvolumes as $i => $subvolume) {
 	$full_copy_cmd = "$binary send  \"$subvolume\" | $binary receive \"$target\"";
-	$basename = basename($subvolume);
+	$basename      = basename($subvolume);
 	if (is_dir("$target/$basename")) {
 		echo "$target/$basename already present, skipping it\n";
 		continue;
