@@ -73,6 +73,10 @@ foreach ($subvolumes as $i => $subvolume) {
 		}
 	} else {
 		$result = try_exec($full_copy_cmd);
+		if (!$result) {
+			echo "Deleting failed copy of subvolume\n";
+			try_exec("$binary subvolume delete \"$target/$basename\"");
+		}
 	}
 	if (!$result) {
 		echo "Last subvolume was not copied, synchronization stopped\n";
