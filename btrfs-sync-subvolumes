@@ -63,7 +63,7 @@ foreach ($subvolumes as $i => $subvolume) {
 		continue;
 	} elseif (isset($subvolumes[$i - 1])) {
 		$previous = $subvolumes[$i - 1];
-		try_exec("$binary property set -ts \"$previous\" ro true");
+                try_exec("$binary property set -ts \"$previous\" ro true");
                 try_exec("$binary property set -ts \"$subvolume\" ro true");
                 $result   = try_exec("$binary send -p \"$previous\" \"$subvolume\" | $binary receive \"$target\"");
                 try_exec("$binary property set -ts \"$previous\" ro false");
