@@ -63,20 +63,26 @@ foreach ($subvolumes as $i => $subvolume) {
 		continue;
 	} elseif (isset($subvolumes[$i - 1])) {
 		$previous = $subvolumes[$i - 1];
-		$result   = try_exec("$binary send -p \"$previous\" \"$subvolume\" | $binary receive \"$target\"");
-		if (!$result) {
-			echo "Diff failed, fallback to full copy\n";
-			echo "Deleting failed copy of subvolume first\n";
-			try_exec("$binary subvolume delete \"$target/$basename\"");
-			echo "Now doing full copy\n";
-			$result = try_exec($full_copy_cmd);
-		}
-	} else {
-		$result = try_exec($full_copy_cmd);
-		if (!$result) {
-			echo "Deleting failed copy of subvolume\n";
-			try_exec("$binary subvolume delete \"$target/$basename\"");
-		}
+		try_exec("$binary property set -ts \"$previous\" ro true");
+                try_exec("$binary property set -ts \"$subvolume\" ro true");
+                $result   = try_exec("$binary send -p \"$previous\" \"$subvolume\" | $binary receive \"$target\"");
+                try_exec("$binary property set -ts \"$previous\" ro false");
+                try_exec("$binary property set -ts \"$subvolume\" ro false");
+                if (!$result) {
+                        echo "Diff failed, fallback to full copy\n";
+                        echo "Deleting failed copy of subvolume first\n";
+                        try_exec("$binary subvolume delete \"$target/$basename\"");
+                        echo "Now doing full copy\n";
+                        $result = try_exec($full_copy_cmd);
+                }
+        } else {
+                try_exec("$binary property set -ts \"$source/$basename\" ro true");
+                $result = try_exec($full_copy_cmd);
+                try_exec("$binary property set -ts \"$source/$basename\" ro false");
+                if (!$result) {
+                        echo "Deleting failed copy of subvolume\n";
+                        try_exec("$binary subvolume delete \"$target/$basename\"");
+                }
 	}
 	if (!$result) {
 		echo "Last subvolume was not copied, synchronization stopped\n";
